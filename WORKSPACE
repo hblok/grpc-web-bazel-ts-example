@@ -3,7 +3,7 @@ workspace(
     name = "tpt",
     # Map the @npm bazel workspace to the node_modules directory.
     # This lets Bazel use the same node_modules as other local tooling.
-    managed_directories = {"@npm": ["node_modules"]},
+    #managed_directories = {"@npm": ["node_modules"]},
 )
 
 # Top-level setup
@@ -14,7 +14,16 @@ http_archive(
     urls = [
         "https://github.com/bazelbuild/rules_nodejs/releases/download/1.6.1/rules_nodejs-1.6.1.tar.gz",
     ],
+    integrity = "sha256-0UB2M53rCOVGDCIfrlxelgXS70hI7uHwyByf/cGrMcE=",
 )
+
+
+# http_archive(
+#     name = "build_bazel_rules_nodejs",
+#     sha256 = "83d2bb029c2a9a06a474c8748d1221a92a7ca02222dcf49a0b567825c4e3f1ce",
+#     strip_prefix = "rules_nodejs-6.3.0",
+#     url = "https://github.com/bazel-contrib/rules_nodejs/releases/download/v6.3.0/rules_nodejs-v6.3.0.tar.gz",
+# )
 
 # Node version is the default
 load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install")

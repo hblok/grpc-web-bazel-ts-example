@@ -2,6 +2,7 @@
     "name": "ts_proto_test",
     "version": "0.1.0",
     "private": true,
+    "license": "noop",
     "devDependencies": {
         "@bazel/bazelisk": "latest",
         "@bazel/buildifier": "latest",
@@ -10,13 +11,13 @@
         "@bazel/typescript": "^1.6.1",
         "@types/express": "^4.17.6",
         "@types/google-protobuf": "^3.7.2",
-        "@types/node": "^13.13.5",
+        "@types/node": "22.7.4",
         "grpc-tools": "^1.8.1",
         "grpc-web": "^1.0.7",
         "grpc_tools_node_protoc_ts": "^3.0.0",
         "minimist": "^1.2.5",
         "request": "^2.88.2",
-        "rollup": "^2.8.2",
+        "rollup": "<3.0.0",
         "typescript": "^3.8.3"
     },
     "scripts": {
