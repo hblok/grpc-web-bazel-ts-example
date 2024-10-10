@@ -1,44 +1,31 @@
-load(":ts_grpc_proto_library.bzl", "ts_grpc_proto_library", "ts_grpc_web_proto_library")
-load("@npm_bazel_labs//:index.bzl", "ts_proto_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
+package(default_visibility = ["//visibility:public"])
 
-###############
-# API Flavour #
-###############
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc//js:defs.bzl", "js_grpc_web_compile")
+
+#load("@rules_python//python:proto.bzl", "py_proto_library")
+
+#load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
+
+
 proto_library(
     name = "greeter_proto",
     srcs = ["greeter.proto"],
-    visibility = ["//web:__pkg__"],
 )
 
-ts_grpc_proto_library(
-    name = "greeter_ts_proto",
-    proto = "greeter.proto",
-    visibility = ["//visibility:public"],
+js_grpc_web_compile(
+    name = "greeter_grpcweb",
+    protos = ["greeter_proto"],
+    verbose = 3,
 )
 
+# py_proto_library(
+#     name = "greeter_py_pb2",
+#     deps = [":greeter_proto"],
+# )
 
-###############
-# Web Flavour #
-###############
-
-# Hack: Copying the file from foo.proto to foo_web.proto to avoid the naming
-# collision.
-genrule(
-    name = "greeter_copy",
-    srcs = ["greeter.proto"],
-    outs = ["greeter_web.proto"],
-    cmd = "cp $< $(@)",
-)
-
-proto_library(
-    name = "greeter_web_proto",
-    srcs = [":greeter_copy"],
-)
-
-ts_proto_library(
-    name = "greeter_web_ts_proto",
-    proto = ":greeter_web_proto",
-    visibility = ["//web:__subpackages__"],
-)
-
+# py_grpc_library(
+#     name = "greeter_py_pb2_grpc",
+#     srcs = [":greeter_proto"],
+#     deps = [":greeter_py_pb2"],
+# )
