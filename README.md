@@ -42,7 +42,7 @@ cd grpc-web-bazel-ts-example
 bazel build ...
 ```
 
-The first time this executes, everything will be downloaded and compiled, which can take quite some time. There are many dependencies to fetch, including Bazel dependencies, NPM packages, Java packages. Usually, the entire GRPC stack is compiled from source. However, the good news is that Bazel is brilliant at cache its work, so the following executions will be blazing fast.
+The first time this executes, everything will be downloaded and compiled, which can take quite some time. There are many dependencies to fetch, including Bazel dependencies, NPM packages, Java packages. Usually, the entire GRPC stack is compiled from source. However, the good news is that Bazel is brilliant at caching its work, so the following executions will be blazing fast.
 
 To start the three server instances, use three terminal windows to execute each of the following:
 
@@ -74,20 +74,18 @@ Here's a brief overview of the components of the stack.
 
 ### Protocol Buffers
 
-These are defined in <proto/greeter.proto>, giving the service definitions.
-<proto/BUILD> generates code from these protos for both the Java server and the gRPC-web side.
+These are defined in [proto/greeter.proto](proto/greeter.proto), giving the service definitions.
+[proto/BUILD](proto/BUILD) generates code from these protos for both the Java server and the gRPC-web side.
 
 ### ECMAScript for the web browser
 
 Although the Bazel rule for the proto is called `js_grpc_web_compile`, it is not immediately ready to be used with a web browser. Together with its supporting libraries of grpc-web and google-protobuf, it has to be converted (aka "transpiled"). There are many ways to skin this cat, but I opted for the Rollup route. However, here I hit a lot of problems.
 
-There is a [rollup_bundle rule](https://www.npmjs.com/package/@bazel/rollup) for Bazel, however, it did not produce output I needed. Therefore, I ended up rolling my own call to `rollup`, using a Bazel `genrule`. It's not pretty, and the area which screams most for improvement in this example.
-
-Or in other words, don't copy this part of the code!
+There is a [rollup_bundle rule](https://www.npmjs.com/package/@bazel/rollup) for Bazel, however, it did not produce the output I needed. Therefore, I ended up rolling my own call to `rollup`, using a Bazel `genrule`. It's not pretty, and the area which screams most for improvement in this example. Or in other words, don't copy this part of the code!
 
 ### Python web server for static content
 
-To server the static .html and .js files, I'm starting the simple HTTP server embedded as module in Python. It's simple, but works. Again, this is a not a production example, so do not replicate this.
+To server the static .html and .js files, I'm starting the simple HTTP server embedded as a module in Python. It's simple, but works. Again, this is a not a production example, so do not replicate this in production.
 
 ### Java GRPC server
 
@@ -99,7 +97,7 @@ Again I had some problems with outdated dependencies. Using a more modern JDK an
 
 The Envoy proxy has emerged as a industry darling for application level routing. Although, its configuration options and format is pretty daunting. (YAML is such a horrible tool for formatting code). But, for this example, it works well enough.
 
-Worth noting, is the filtering and routing of static vs. GRPC requests. The key here is the filtering section with takes URL with a `/api` prefix and send them to the GRPC server (But notice the rewrite rule which drop the "/api" part first). Everything else is routed to the static Python server.
+Worth noting, is the filtering and routing of static vs. GRPC requests. The key here is the filtering section which takes URLs with a `/api` prefix and send them to the GRPC server (But notice the rewrite rule which drop the "/api" part first). Everything else is routed to the static Python server.
 
 ```
 routes:
@@ -116,7 +114,7 @@ routes:
 
 Tying it all together is Google's Bazel (aka Blaze) build framework. With support for all major languages, and a plethora of plugin rules, it makes defining the compile process and build dependencies a breeze. Or so is at least the promise.
 
-The integration with JavaScript for a browser client was somewhat underwhelming. Compared to other languages and integration, it was the bar to entry was surprisingly high. In the end, the existing `rollup_bundle` rule proved ill-suited, so instead a custom call to Rollup under NPM was needed. However, developing for another complex build and repository framework from within Bazel is extremely tedious.
+The integration with JavaScript for a browser client was somewhat underwhelming. Compared to other languages and integration, the bar to entry was surprisingly high. In the end, the existing `rollup_bundle` rule proved ill-suited, so instead a custom call to Rollup under NPM was needed. However, developing for another complex build and repository framework from within Bazel is extremely tedious.
 
 All of this is not Bazel's fault. Rather, web development and integration with many backend technologies is still a jungle, some twenty years after the dawn of Web 2.0, AJAX et.al.
 
@@ -136,7 +134,7 @@ Taking Shepherdson's example from four years back into a modern environment has 
 
 ## References
 
-While working on this examples, the following resources proved useful:
+While working on this example, the following resources proved useful:
 
 - [gRPC tutorial for Java](https://grpc.io/docs/languages/java/basics/#defining-the-service)
 - [@bazel/rollup rule documentation](https://www.npmjs.com/package/@bazel/rollup)
