@@ -1,35 +1,27 @@
 {
-    "name": "ts_proto_test",
-    "version": "0.1.0",
-    "private": true,
-    "license": "noop",
-    "devDependencies": {
-        "@bazel/bazelisk": "latest",
-        "@bazel/buildifier": "latest",
-        "@bazel/ibazel": "^0.13.0",
-        "@bazel/rollup": "^1.6.1",
-        "@bazel/typescript": "^1.6.1",
-        "@types/express": "^4.17.6",
-        "@types/google-protobuf": "^3.7.2",
-        "@types/node": "22.7.4",
-        "grpc-tools": "^1.8.1",
-        "grpc-web": "^1.0.7",
-        "grpc_tools_node_protoc_ts": "^3.0.0",
-        "minimist": "^1.2.5",
-        "request": "^2.88.2",
-        "rollup": "<3.0.0",
-        "typescript": "^3.8.3"
+    "license": "UNLICENSED",
+    "olddevDependencies": {
+	"@bazel/rollup": "latest",
+	"rollup": "backports-2",
+	"@bazel/typescript": "latest",
+	"typescript": "latest",
+	"rollup-plugin-commonjs": "10.1.0",
+	"@rollup/plugin-commonjs": "21.0.0",
+	      "fdir": "latest"
     },
-    "scripts": {
-        "build": "bazel build //...",
-        "test": "bazel test //..."
-    },
+    
     "dependencies": {
-        "@bazel/labs": "^1.6.1",
-        "express": "^4.17.1",
-        "google-protobuf": "^3.12.0-rc.1",
-        "grpc": "^1.24.2",
-        "grpc-express": "^1.0.1-beta",
-        "http-proxy-middleware": "^1.0.3"
-    }
+	"@bazel/rollup": "latest",
+    "@grpc/grpc-js": "1.7.3",
+    "google-protobuf": "3.21.2",
+    "grpc-tools": "1.11.3",
+    "grpc-web": "1.4.2",
+      "ts-protoc-gen": "0.15.0",
+      "rollup": "backports-2",
+      "@bazel/typescript": "latest",
+      "rollup-plugin-commonjs": "10.1.0",
+      "@rollup/plugin-commonjs": "21.0.0",
+      "fdir": "latest",
+      "typescript": "latest"
+  }
 }

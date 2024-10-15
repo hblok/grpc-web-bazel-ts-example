@@ -1,143 +1,147 @@
-# gRPC + TypeScript + Bazel + Web Example
+# Example: gRPC + ECMAScript + Envoy Proxy + Bazel
 
-This is an example/starter app that demonstrates how to use Bazel to combine:
-- A Node.js Express web server, in TypeScript
-- A Node.js gRPC server, in TypeScript
-- A gRPC-web browser client, in TypeScript
+This example stack demonstrates a web front-end communicating through a GRPC client in JavaScript to a Java GRPC server, over an Envoy proxy. Based on a fork of [Braden Shepherdson's example](https://github.com/bshepherdson/grpc-web-bazel-ts-example), it takes a radically different approach in some areas.
+
+In particular, I felt it was not necessary to use TypeScript everywhere. A strong point of Protocol Buffers and GRPC is after all communication and sharing across different languages. Therefore I opted for a simple Java server on the back-end. Furthermore, I shortcut the static web server with the Python embedded 'http.server' module. Obviously, not for a production setup. Finally, I used the modern Envoy proxy, routing both static page and GRPC requests, which also avoids the CORS problem Shepherdson mentioned.
+
+In summary, this stack includes:
+- A Python web server for static content.
+- A Java GRPC server.
+- An Envoy proxy.
 - Bazel for building everything
 
-## Why?
 
-This example is the fruit of a frustrating journey through patchy documentation,
-trying to choose between several alternatives with no guidance on which is the
-most up-to-date, or which one works with the other components, and so on.
+## Prerequisites
 
-If you've had a similar experience trying to navigate the confused and rapidly
-evolving world of using Bazel in the wild, this is a way to get started.
+This example assumes a Debian or Ubuntu based OS.
 
-## Getting Started
+To build and run this demo, you'll need to install the following:
 
-You need Node and either NPM or Yarn installed initially.
+- Python 3
+- Java JDK (11 or newer)
+- Bazel
+- NPM, Yarnpkg
+- Docker
 
-Then you can `npm install` or `yarn install` in this directory, and then
-`node_modules/.bin/bazel` will work as your `bazel` command.
-
-If you like, you can install Bazel from a distro package, or globally install
-Bazelisk using Node. It's a version manager like `nvm` for Node:
+The following should take you far:
 
 ```
-npm install -g @bazel/bazelisk
+apt install python3 npm yarnpkg openjdk-21-jdk-headless
 ```
 
-Then you have a global `bazel` command in your `PATH`.
+Install Bazel [according to these instructions](https://bazel.build/install/ubuntu#install-on-ubuntu). I personally prefer the Apt repository option.
 
-This sample probably won't work on Windows, but let me know either way if you
-try it!
+Install Docker [as described here](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository). Again, I prefer the Apt repository install. 
 
-Note that the Bazel configuration uses its own Node and NPM, not the host ones!
-(You can customize that in the `WORKSPACE` file, but the default is the latest
-LTS, which is usually fine.)
+## Starting
 
-Everything else, including installing Node and NPM tools, should be handled by
-the Bazel workspace. So once you've got Bazel:
+Once you have everything installed, clone this project, and build with:
 
 ```
-git clone https://github.com/shepheb/grpc-web-bazel-ts-example
 cd grpc-web-bazel-ts-example
-yarn install    # or npm install
+bazel build ...
 ```
 
-Then run each of these in separate terminals. The order shouldn't matter, though
-the proxy server complains that it can't find the backend.
+The first time this executes, everything will be downloaded and compiled, which can take quite some time. There are many dependencies to fetch, including Bazel dependencies, NPM packages, Java packages. Usually, the entire GRPC stack is compiled from source. However, the good news is that Bazel is brilliant at cache its work, so the following executions will be blazing fast.
+
+To start the three server instances, use three terminal windows to execute each of the following:
 
 ```
-# Separate terminals
-bazel run //api:dev
-bazel run //api:proxy
-bazel run //server:dev
-bazel run //web:devserver
+bazel run //server:GreeterServer
 ```
 
-Then you should be able to point your browser at `http://localhost:5080` and see
-the example page, which makes an RPC and posts the results in the JS console.
+```
+bazel run //web:local_server
+```
 
-If you like, you can use `ibazel run` to make the fast-moving parts (the API
-server and `ts_devserver` for the web) auto-reloading. The other components can
-survive the others reloading underneath them.
+```
+proxy/start_proxy.sh
+```
+
+Notice that the last starts a Docker container for the Envoy proxy. The first time, its base images are downloaded, at about 150 MB.
+
+Alternatively, you can start all in the same window, although this will garble the log output from the different servers:
+
+```
+cd grpc-web-bazel-ts-example
+./start_all.sh
+```
+
 
 ## Architecture
 
-Here's an overview of how the components fit together. Of these, the protobufs,
-API server and web app are the "user code", while the Express server and API
-proxy server are pretty generic, reusable components.
+Here's a brief overview of the components of the stack.
 
-### Protocol buffers
+### Protocol Buffers
 
-These are defined in `proto/greeter.proto`, giving the service definitions.
-`proto/BUILD.bazel` shows how to generate code from these protos for both the
-Node.js server and the gRPC-web side.
+These are defined in <proto/greeter.proto>, giving the service definitions.
+<proto/BUILD> generates code from these protos for both the Java server and the gRPC-web side.
 
-### Express server
+### ECMAScript for the web browser
 
-`//server:dev`, port 5080.
+Although the Bazel rule for the proto is called `js_grpc_web_compile`, it is not immediately ready to be used with a web browser. Together with its supporting libraries of grpc-web and google-protobuf, it has to be converted (aka "transpiled"). There are many ways to skin this cat, but I opted for the Rollup route. However, here I hit a lot of problems.
 
-This server is just a frontend for routing.
-- `/api/*` requests are proxied to the API proxy server on port 5082.
-- Everything else goes to the ts_devserver on port 5081.
+There is a [rollup_bundle rule](https://www.npmjs.com/package/@bazel/rollup) for Bazel, however, it did not produce output I needed. Therefore, I ended up rolling my own call to `rollup`, using a Bazel `genrule`. It's not pretty, and the area which screams most for improvement in this example.
 
-You could add your own Express handlers as necessary. Be careful that you don't
-`app.use` middleware above the `/api` proxy that will interfere with it.
+Or in other words, don't copy this part of the code!
 
-Otherwise, there should be little need to modify this component.
+### Python web server for static content
 
-### API Proxy server
+To server the static .html and .js files, I'm starting the simple HTTP server embedded as module in Python. It's simple, but works. Again, this is a not a production example, so do not replicate this.
 
-`//api:proxy`, port 5082
+### Java GRPC server
 
-This is a prebuilt binary configured with flags, there's no code for it in this
-example. This proxy translates between gRPC-web HTTP requests for
-`/mypkg.MyService/SomeMethod` and backend gRPC calls.
+The Java server is very small and simple. It's the bare minimum of a GRPC server. It replies to incoming "hello" requests by repeating the incoming name. Notice that each key-press in the text field of the web site will result in a new call.
 
-Be aware that this proxy server only supports unary (request-response) and
-server streaming gRPC methods. Client streaming and full-duplex streaming are
-not well supported by gRPC-web generally, and not supported at all by this
-proxy.
+Again I had some problems with outdated dependencies. Using a more modern JDK and Bazel bzl MODULE should hopefully improve this.
 
-There should be little need to modify this component.
+### Envoy proxy server
 
-### API server
+The Envoy proxy has emerged as a industry darling for application level routing. Although, its configuration options and format is pretty daunting. (YAML is such a horrible tool for formatting code). But, for this example, it works well enough.
 
-`//api:dev`, port 5051
-
-This is a Node.js gRPC server for the services you've defined in `//proto`. This
-is user code, part of your application, and one of the main places you'll be
-writing new code.
-
-See the note above about gRPC-web not supporting client or duplex streaming.
-
-### Web code
-
-`//web:devserver`, port 5081
-
-This target is a `ts_devserver` that handles hot-reloading nicely when used with
-`ibazel`.
-
-`web/index.ts` shows how to import and use the gRPC-web generated code to make
-RPCs to the backend.
-
-
-## Using the Template
-
-Quick guides to various tasks you might need to do.
-
-### Adding Node.js dependencies
+Worth noting, is the filtering and routing of static vs. GRPC requests. The key here is the filtering section with takes URL with a `/api` prefix and send them to the GRPC server (But notice the rewrite rule which drop the "/api" part first). Everything else is routed to the static Python server.
 
 ```
-# Either:
-yarn add some-npm-package       # Needed at runtime
-yarn add -D some-npm-package    # Only needed at build time
+routes:
+  - match: { prefix: "/api/" }
+    route:
+      prefix_rewrite: "/"
+      cluster: greeter_service
+  - match: { prefix: "/" }
+    route:
+      cluster: static_service
 ```
 
-The Node dependencies are managed by Bazel; once you declare the dependency with
-the above commands,
+### Bazel
 
+Tying it all together is Google's Bazel (aka Blaze) build framework. With support for all major languages, and a plethora of plugin rules, it makes defining the compile process and build dependencies a breeze. Or so is at least the promise.
+
+The integration with JavaScript for a browser client was somewhat underwhelming. Compared to other languages and integration, it was the bar to entry was surprisingly high. In the end, the existing `rollup_bundle` rule proved ill-suited, so instead a custom call to Rollup under NPM was needed. However, developing for another complex build and repository framework from within Bazel is extremely tedious.
+
+All of this is not Bazel's fault. Rather, web development and integration with many backend technologies is still a jungle, some twenty years after the dawn of Web 2.0, AJAX et.al.
+
+On the bright side, this leave plenty of opportunity for improvements. Hopefully some will come under this repo in the near future.
+
+
+## Future work
+
+Taking Shepherdson's example from four years back into a modern environment has proved an interesting exercise. But there are still areas to improve on:
+
+- Upgrade from the Bazel WORKSPACE to [MODULE.bazel](https://bazel.build/rules/lib/globals/module).
+- Upgrade and use the [rollup_bundle rule](https://www.npmjs.com/package/@bazel/rollup).
+- Consider the [Aspect Build rules and tools](https://docs.aspect.build/).
+- Ensure a modern JDK version is used throughout.
+- Revisit Python integration and a Python GRPC server.
+
+
+## References
+
+While working on this examples, the following resources proved useful:
+
+- [gRPC tutorial for Java](https://grpc.io/docs/languages/java/basics/#defining-the-service)
+- [@bazel/rollup rule documentation](https://www.npmjs.com/package/@bazel/rollup)
+- [Rollup CLI documentation](https://rollupjs.org/command-line-interface/)
+- [Rollup.js cheat-sheet](https://devhints.io/rollup)
+- [gRPC-web tutorial](https://grpc.io/docs/platforms/web/basics/)
+- [Envoy gRPC](https://www.envoyproxy.io/docs/envoy/v1.31.2/intro/arch_overview/other_protocols/grpc#arch-overview-grpc)
+- [Eugene Khabarov's gRPC, Bazel, Envoy example](https://ekhabarov.com/post/envoy-as-an-api-gateway-grpc-microservice/)

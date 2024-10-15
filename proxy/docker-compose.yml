@@ -1,0 +1,8 @@
+services:
+  envoy:
+    image: "envoyproxy/envoy:debug-dev"
+    network_mode: host
+    ports:
+       - 12000
+    volumes:
+       - ${PWD}/envoy.yaml:/etc/envoy/envoy.yaml

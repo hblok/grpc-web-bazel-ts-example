@@ -1,10 +1,30 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <title>Test Page</title>
-    <script src="/bundle.js"></script>
+    <title>Greeter</title>
+
+    <script type="importmap">
+      {"imports": {
+          "greeter_pb": "./js/greeter_pb.js",
+	  "./greeter_pb.js": "./js/greeter_pb.js",
+         "greeter_grpc_web_pb": "./js/greeter_grpc_web_pb.js",
+         "google-protobuf": "./js/google-protobuf.js",
+         "grpc-web": "./js/index.js"
+      }}
+    </script>
+    
+    <script type="module" src="js/main.js"></script>
+    
   </head>
-  <body class="main-colour">
-    See the JS Console. You should see "Hello, World!" if everything worked.
+  
+  <body>
+    <b>Hello!</b><br>
+    <br>
+    
+    What's your name?<br>
+    <input id="name" type="text""><br>
+    <br>
+
+    <div id="msg"></div>
   </body>
 </html>
-

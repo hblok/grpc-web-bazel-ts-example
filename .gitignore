@@ -1,4 +1,4 @@
 dist
-bazel-out
+bazel-*
 node_modules
-MODULE.bazel.lock
+yarn*log
