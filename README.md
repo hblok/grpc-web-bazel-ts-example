@@ -1,3 +1,6 @@
+![test result](https://github.com/hblok/grpc-web-bazel-ts-example/actions/workflows/main.yml/badge.svg)
+
+
 # Example: gRPC + ECMAScript + Envoy Proxy + Bazel
 
 This example stack demonstrates a web front-end communicating through a GRPC client in JavaScript to a Java GRPC server, over an Envoy proxy. Based on a fork of [Braden Shepherdson's example](https://github.com/bshepherdson/grpc-web-bazel-ts-example), it takes a radically different approach in some areas.
